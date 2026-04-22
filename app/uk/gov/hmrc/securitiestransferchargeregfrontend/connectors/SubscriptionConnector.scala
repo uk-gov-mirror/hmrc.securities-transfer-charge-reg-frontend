@@ -158,7 +158,14 @@ class SubscriptionConnectorImpl @Inject()(registrationClient: RegistrationClient
       (l1, l2, l3) <- extractLines(address)
       email        <- getContactEmailAddress(answers)
       tel          <- getContactNumber(answers)
-    } yield OrganisationSubscriptionDetails(safeId, l1, l2, l3, address.postcode, address.country.code, tel, None, email)
+    } yield OrganisationSubscriptionDetails(safeId = safeId,
+      addressLine1 = l1,
+      addressLine2 = l2,
+      addressLine3 = l3,
+      postcode=address.postcode,
+      countryCode=address.country.code, telephoneNumber=tel,
+      mobileNumber = None,
+      email = email)
   }
 
   private def enrol( subscriptionId: String,

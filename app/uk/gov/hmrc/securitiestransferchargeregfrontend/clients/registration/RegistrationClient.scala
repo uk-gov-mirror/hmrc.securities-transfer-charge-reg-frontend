@@ -17,7 +17,7 @@
 package uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration
 
 import play.api.Logging
-import play.api.http.Status.{BAD_REQUEST, NOT_FOUND, NO_CONTENT, OK}
+import play.api.http.Status.{BAD_REQUEST, CREATED, NOT_FOUND, NO_CONTENT, OK}
 import play.api.libs.json.{JsValue, Json}
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.http.HttpReads.Implicits.*
@@ -28,6 +28,7 @@ import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.Indi
 import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.RegistrationResponse.RegistrationSuccessful
 import uk.gov.hmrc.securitiestransferchargeregfrontend.config.FrontendAppConfig
 
+import java.util.UUID
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
@@ -40,11 +41,14 @@ trait RegistrationClient:
   def enrolIndividual(enrolmentDetails: IndividualEnrolmentDetails)(implicit hc: HeaderCarrier): Future[EnrolmentResult]
   def enrolOrganisation(enrolmentDetails: OrganisationEnrolmentDetails)(implicit hc: HeaderCarrier): Future[EnrolmentResult]
 
-// DUMMY IMPL until we have a real BE implementation for this.
 class RegistrationClientImpl @Inject()(
                                         http: HttpClientV2,
                                         config: FrontendAppConfig
                                       )(implicit ec: ExecutionContext) extends RegistrationClient with Logging {
+
+  private def correlationId: String = UUID.randomUUID().toString
+
+  private def headers: Seq[(String, String)] = Seq("correlation-id" -> correlationId)
 
   override def hasCurrentSubscription(
                                        etmpSafeId: String
@@ -124,11 +128,12 @@ class RegistrationClientImpl @Inject()(
     http
       .post(url)
       .withBody(Json.toJson(details): JsValue)
+      .setHeader(headers: _*)
       .execute[HttpResponse]
       .map { resp =>
         resp.status match {
 
-          case OK =>
+          case CREATED =>
             Json.parse(resp.body).validate[IndividualSubscriptionResponseDto].asEither match {
               case Right(dto) =>
                 Right(
@@ -175,6 +180,7 @@ class RegistrationClientImpl @Inject()(
     http
       .post(url)
       .withBody(Json.toJson(organisationSubscriptionDetails))
+      .setHeader(headers: _*)
       .execute[HttpResponse]
       .map(handleResponse)
       .recover {
@@ -188,7 +194,7 @@ class RegistrationClientImpl @Inject()(
 
   private def handleResponse(resp: HttpResponse): SubscriptionResult =
     resp.status match {
-      case OK =>
+      case CREATED =>
         parseSuccessResponse(resp.body)
       case BAD_REQUEST =>
         Left(SubscriptionClientError(s"SubscriptionClient.subscribe: 400 from BE. body=${resp.body}"))

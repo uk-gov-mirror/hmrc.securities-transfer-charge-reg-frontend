@@ -20,11 +20,12 @@ import play.api.libs.json.{Json, OFormat}
 
 case class OrganisationSubscriptionDetails(
                                           safeId: String,
+                                          contactName:String = "", //TODO need to retrieve company name from grs
   addressLine1: String,
   addressLine2: Option[String] = None,
   addressLine3: Option[String] = None,
-  postCode: String,
-  country: String,
+  postcode: String,
+  countryCode: String,
   telephoneNumber: String,
   mobileNumber: Option[String] = None,
   email: String
