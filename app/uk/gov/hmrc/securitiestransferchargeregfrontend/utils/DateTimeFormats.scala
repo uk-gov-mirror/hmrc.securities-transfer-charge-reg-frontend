@@ -25,7 +25,7 @@ object DateTimeFormats {
 
   private val dateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy")
   
-  val dobFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+  val dobFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-dd-MM")
 
   private val localisedDateTimeFormatters = Map(
     "en" -> dateTimeFormatter,
