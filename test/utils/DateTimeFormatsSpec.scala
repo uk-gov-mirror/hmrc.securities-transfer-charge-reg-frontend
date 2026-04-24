@@ -46,10 +46,10 @@ class DateTimeFormatsSpec extends AnyFreeSpec with Matchers {
       result mustEqual "1 January 2023"
     }
 
-    "format LocalDate as dd-MM-yyyy" in {
+    "format LocalDate as yyyy-dd-MM" in {
       val dob = LocalDate.of(1990, 12, 1)
       val fmt = DateTimeFormats.dobFormatter
-      dob.format(fmt) mustBe "01-12-1990"
+      dob.format(fmt) mustBe "1990-01-12"
     }
   }
 
