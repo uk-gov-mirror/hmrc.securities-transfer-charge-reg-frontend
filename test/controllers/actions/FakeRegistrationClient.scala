@@ -44,7 +44,7 @@ class FakeRegistrationClient(succeeds: Boolean) extends RegistrationClient {
       Future.successful(Right(RegistrationFailed))
     }
 
-  override def subscribe(SubscriptionDetails:SubscriptionDetails)(implicit hc: HeaderCarrier): Future[SubscriptionResult] =
+  override def subscribe(subscriptionDetails:SubscriptionDetails)(implicit hc: HeaderCarrier): Future[SubscriptionResult] =
     if (succeeds) {
       Future.successful(Right(SubscriptionSuccessful("Sub123")))
     }

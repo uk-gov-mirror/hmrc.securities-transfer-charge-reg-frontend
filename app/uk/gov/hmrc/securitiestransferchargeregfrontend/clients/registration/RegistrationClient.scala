@@ -154,7 +154,7 @@ class RegistrationClientImpl @Inject()(
   private def parseSuccessResponse(body: String): SubscriptionResult =
     Json
       .parse(body)
-      .validate[OrganisationSubscriptionResponseDto]
+      .validate[SubscriptionResponseDto]
       .fold(
         errs =>
           val msg =
