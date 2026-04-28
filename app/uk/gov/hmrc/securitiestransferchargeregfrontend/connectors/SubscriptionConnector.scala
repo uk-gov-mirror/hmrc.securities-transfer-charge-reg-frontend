@@ -139,7 +139,7 @@ class SubscriptionConnectorImpl @Inject()(registrationClient: RegistrationClient
   private def buildContactName(data: ValidIndividualData): String =
     normalizeWhitespace(s"${data.firstName} ${data.lastName}")
 
-  private val buildSubscriptionDetails: String => UserAnswers => ValidIndividualData => Option[IndividualSubscriptionDetails] = { safeId =>
+  private val buildSubscriptionDetails: String => UserAnswers => ValidIndividualData => Option[SubscriptionDetails] = { safeId =>
     answers =>
       data =>
         for {
@@ -148,24 +148,17 @@ class SubscriptionConnectorImpl @Inject()(registrationClient: RegistrationClient
           (l1, l2, l3) <- extractLines(address)
           email <- getEmailAddress(answers)
           tel <- getTelephoneNumber(answers)
-        } yield IndividualSubscriptionDetails(safeId, buildContactName(data), l1, l2, l3, address.postcode, address.country.code, tel, None, email)
+        } yield SubscriptionDetails(safeId, buildContactName(data), l1, l2, l3, address.postcode, address.country.code, tel,None, email)
   }
 
-  private val buildOrganisationSubscriptionDetails: String => UserAnswers => Option[OrganisationSubscriptionDetails] = { safeId => answers =>
+  private val buildOrganisationSubscriptionDetails: String => UserAnswers => Option[SubscriptionDetails] = { safeId => answers =>
     for {
       alf          <- getOrgAddress(answers)
       address      =  alf.address
       (l1, l2, l3) <- extractLines(address)
       email        <- getContactEmailAddress(answers)
       tel          <- getContactNumber(answers)
-    } yield OrganisationSubscriptionDetails(safeId = safeId,
-      addressLine1 = l1,
-      addressLine2 = l2,
-      addressLine3 = l3,
-      postcode=address.postcode,
-      countryCode=address.country.code, telephoneNumber=tel,
-      mobileNumber = None,
-      email = email)
+    } yield SubscriptionDetails(safeId, "",l1, l2, l3, address.postcode, address.country.code, tel,None, email)
   }
 
   private def enrol( subscriptionId: String,

@@ -137,8 +137,8 @@ class FrontendAppConfig @Inject() (configuration: Configuration, servicesConfig:
   val registerIndividualBackendUrl: String =
     s"$registrationBackendBaseUrl/securities-transfer-charge-registration/registration/individual"
 
-  val subscribeIndividualBackendUrl: String =
-    s"$registrationBackendBaseUrl/securities-transfer-charge-registration/subscription/individual"
+  val subscribeUrl: String =
+    s"$registrationBackendBaseUrl/securities-transfer-charge-registration/subscription"
 
   val enrolIndividualBackendUrl: String =
     s"$registrationBackendBaseUrl/securities-transfer-charge-registration/enrolment/individual"
@@ -146,8 +146,7 @@ class FrontendAppConfig @Inject() (configuration: Configuration, servicesConfig:
   val hasCurrentSubscriptionBaseUrl: String =
     s"$registrationBackendBaseUrl/securities-transfer-charge-registration/subscription"
 
-  val subscribeOrganisationBackendUrl: String =
-    s"$registrationBackendBaseUrl/securities-transfer-charge-registration/subscription/organisation"
+
 
   val enrolOrganisationBackendUrl: String =
     s"$registrationBackendBaseUrl/securities-transfer-charge-registration/enrolment/organisation"

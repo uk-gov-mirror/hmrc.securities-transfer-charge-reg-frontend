@@ -36,8 +36,7 @@ import scala.util.control.NonFatal
 trait RegistrationClient:
   def hasCurrentSubscription(etmpSafeId: String)(implicit hc: HeaderCarrier): Future[SubscriptionStatusResult]
   def register(individualRegistrationDetails: IndividualRegistrationDetails)(implicit hc: HeaderCarrier): Future[RegistrationResult]
-  def subscribe(individualSubscriptionDetails: IndividualSubscriptionDetails)(implicit hc: HeaderCarrier): Future[SubscriptionResult]
-  def subscribe(organisationSubscriptionDetails: OrganisationSubscriptionDetails)(implicit hc: HeaderCarrier): Future[SubscriptionResult]
+  def subscribe(subscriptionDetails: SubscriptionDetails)(implicit hc: HeaderCarrier): Future[SubscriptionResult]
   def enrolIndividual(enrolmentDetails: IndividualEnrolmentDetails)(implicit hc: HeaderCarrier): Future[EnrolmentResult]
   def enrolOrganisation(enrolmentDetails: OrganisationEnrolmentDetails)(implicit hc: HeaderCarrier): Future[EnrolmentResult]
 
@@ -118,69 +117,18 @@ class RegistrationClientImpl @Inject()(
           Left(RegistrationServerError(msg))
       }
   }
-
+  
   override def subscribe(
-                          details: IndividualSubscriptionDetails
+                          subscriptionDetails: SubscriptionDetails
                         )(implicit hc: HeaderCarrier): Future[SubscriptionResult] = {
 
-    val url = url"${config.subscribeIndividualBackendUrl}"
+    val url = url"${config.subscribeUrl}"
 
     http
       .post(url)
-      .withBody(Json.toJson(details): JsValue)
+      .withBody(Json.toJson(subscriptionDetails))
       .setHeader(headers: _*)
-      .execute[HttpResponse]
-      .map { resp =>
-        resp.status match {
-
-          case CREATED =>
-            Json.parse(resp.body).validate[IndividualSubscriptionResponseDto].asEither match {
-              case Right(dto) =>
-                Right(
-                  SubscriptionResponse.SubscriptionSuccessful(dto.subscriptionId)
-                )
-
-              case Left(errs) =>
-                val msg =
-                  s"SubscriptionClient.subscribe: Could not parse OK response. errs=$errs body=${resp.body}"
-                logger.error(msg)
-                Left(SubscriptionServerError(msg))
-            }
-
-          case BAD_REQUEST =>
-            Left(
-              SubscriptionClientError(
-                s"SubscriptionClient.subscribe: 400 from BE. body=${resp.body}"
-              )
-            )
-
-          case status =>
-            Left(
-              SubscriptionServerError(
-                s"SubscriptionClient.subscribe: unexpected status=$status body=${resp.body}"
-              )
-            )
-        }
-      }
-      .recover {
-        case NonFatal(e) =>
-          val msg =
-            s"SubscriptionClient.subscribe: exception calling BE: ${e.getMessage}"
-          logger.error(msg, e)
-          Left(SubscriptionServerError(msg))
-      }
-  }
-
-  override def subscribe(
-                          organisationSubscriptionDetails: OrganisationSubscriptionDetails
-                        )(implicit hc: HeaderCarrier): Future[SubscriptionResult] = {
-
-    val url = url"${config.subscribeOrganisationBackendUrl}"
-
-    http
-      .post(url)
-      .withBody(Json.toJson(organisationSubscriptionDetails))
-      .setHeader(headers: _*)
+      .withBody(Json.toJson(subscriptionDetails))
       .execute[HttpResponse]
       .map(handleResponse)
       .recover {

@@ -28,7 +28,7 @@ import play.api.test.Helpers.*
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.EnrolmentResponse.{EnrolmentFailed, EnrolmentSuccessful}
 import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.SubscriptionResponse.{SubscriptionFailed, SubscriptionSuccessful}
-import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.{OrganisationEnrolmentDetails, OrganisationSubscriptionDetails, RegistrationClient}
+import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.{OrganisationEnrolmentDetails, RegistrationClient, SubscriptionDetails}
 import uk.gov.hmrc.securitiestransferchargeregfrontend.controllers.organisations.routes.{ContactEmailAddressController, ContactNumberController, RegistrationCompleteController}
 import uk.gov.hmrc.securitiestransferchargeregfrontend.controllers.routes.JourneyRecoveryController
 import uk.gov.hmrc.securitiestransferchargeregfrontend.forms.organisations.ContactNumberFormProvider
@@ -144,7 +144,7 @@ class ContactNumberControllerSpec extends SpecBase with MockitoSugar {
 
       val fakeRegistrationClient = mock[RegistrationClient]
 
-      when(fakeRegistrationClient.subscribe(any[OrganisationSubscriptionDetails]())(any[HeaderCarrier]()))
+      when(fakeRegistrationClient.subscribe(any[SubscriptionDetails]())(any[HeaderCarrier]()))
         .thenReturn(Future.successful(Right(SubscriptionSuccessful(Fixtures.subscriptionId))))
 
       when(fakeRegistrationClient.enrolOrganisation(any[OrganisationEnrolmentDetails]())(any[HeaderCarrier]()))
@@ -179,7 +179,7 @@ class ContactNumberControllerSpec extends SpecBase with MockitoSugar {
 
       val fakeRegistrationClient = mock[RegistrationClient]
 
-      when(fakeRegistrationClient.subscribe(any[OrganisationSubscriptionDetails]())(any[HeaderCarrier]()))
+      when(fakeRegistrationClient.subscribe(any[SubscriptionDetails]())(any[HeaderCarrier]()))
         .thenReturn(Future.successful(Right(SubscriptionSuccessful(Fixtures.subscriptionId))))
 
       when(fakeRegistrationClient.enrolOrganisation(any[OrganisationEnrolmentDetails]())(any[HeaderCarrier]()))
@@ -214,7 +214,7 @@ class ContactNumberControllerSpec extends SpecBase with MockitoSugar {
 
       val fakeRegistrationClient = mock[RegistrationClient]
 
-      when(fakeRegistrationClient.subscribe(any[OrganisationSubscriptionDetails]())(any[HeaderCarrier]()))
+      when(fakeRegistrationClient.subscribe(any[SubscriptionDetails]())(any[HeaderCarrier]()))
         .thenReturn(Future.successful(Right(SubscriptionFailed)))
 
       when(fakeRegistrationClient.enrolOrganisation(any[OrganisationEnrolmentDetails]())(any[HeaderCarrier]()))

@@ -21,7 +21,8 @@ import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.Enro
 import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.RegistrationResponse.{RegistrationFailed, RegistrationSuccessful}
 import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.SubscriptionResponse.{SubscriptionFailed, SubscriptionSuccessful}
 import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.SubscriptionStatus.{SubscriptionActive, SubscriptionNotFound}
-import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.{EnrolmentResult, IndividualEnrolmentDetails, IndividualRegistrationDetails, IndividualSubscriptionDetails, OrganisationEnrolmentDetails, OrganisationSubscriptionDetails, RegistrationClient, RegistrationResult, SubscriptionResult, SubscriptionStatusResult}
+import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.{EnrolmentResult, IndividualEnrolmentDetails, IndividualRegistrationDetails,
+  OrganisationEnrolmentDetails, RegistrationClient, RegistrationResult, SubscriptionDetails, SubscriptionResult, SubscriptionStatusResult}
 
 import scala.concurrent.Future
 
@@ -43,7 +44,7 @@ class FakeRegistrationClient(succeeds: Boolean) extends RegistrationClient {
       Future.successful(Right(RegistrationFailed))
     }
 
-  override def subscribe(individualSubscriptionDetails: IndividualSubscriptionDetails)(implicit hc: HeaderCarrier): Future[SubscriptionResult] =
+  override def subscribe(SubscriptionDetails:SubscriptionDetails)(implicit hc: HeaderCarrier): Future[SubscriptionResult] =
     if (succeeds) {
       Future.successful(Right(SubscriptionSuccessful("Sub123")))
     }
@@ -51,13 +52,6 @@ class FakeRegistrationClient(succeeds: Boolean) extends RegistrationClient {
       Future.successful(Right(SubscriptionFailed))
     }
 
-  override def subscribe(organisationSubscriptionDetails: OrganisationSubscriptionDetails)(implicit hc: HeaderCarrier): Future[SubscriptionResult] =
-    if (succeeds) {
-      Future.successful(Right(SubscriptionSuccessful("Sub123")))
-    }
-    else {
-      Future.successful(Right(SubscriptionFailed))
-    }
 
   override def enrolIndividual(enrolmentDetails: IndividualEnrolmentDetails)(implicit hc: HeaderCarrier): Future[EnrolmentResult] =
     Future.successful(Right(EnrolmentSuccessful))
