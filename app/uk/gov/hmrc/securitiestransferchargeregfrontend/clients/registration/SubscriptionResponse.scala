@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration
 
+import play.api.libs.json.{Json, OFormat}
+
 enum SubscriptionResponse:
   case SubscriptionSuccessful(subscriptionId: String)
   case SubscriptionFailed
@@ -28,3 +30,9 @@ enum SubscriptionStatus:
   case SubscriptionActive
   
 type SubscriptionStatusResult = Either[RegistrationServiceError, SubscriptionStatus]
+
+final case class SubscriptionResponseDto(subscriptionId: String)
+
+object SubscriptionResponseDto {
+  implicit val format: OFormat[SubscriptionResponseDto] = Json.format[SubscriptionResponseDto]
+}

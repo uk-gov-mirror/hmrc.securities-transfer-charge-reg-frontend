@@ -29,7 +29,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.EnrolmentResponse.EnrolmentSuccessful
 import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.SubscriptionResponse.SubscriptionSuccessful
 import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.SubscriptionStatus.SubscriptionActive
-import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.{IndividualEnrolmentDetails, IndividualSubscriptionDetails, RegistrationClient}
+import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.{IndividualEnrolmentDetails, RegistrationClient, SubscriptionDetails}
 import uk.gov.hmrc.securitiestransferchargeregfrontend.connectors.{SubscriptionConnector, SubscriptionErrorException}
 import uk.gov.hmrc.securitiestransferchargeregfrontend.controllers.individuals.routes as individualRoutes
 import uk.gov.hmrc.securitiestransferchargeregfrontend.controllers.routes
@@ -47,7 +47,7 @@ import scala.concurrent.Future
 
 class WhatsYourContactNumberControllerSpec extends SpecBase with MockitoSugar {
 
-  def onwardRoute = Call("GET", "/foo")
+  def onwardRoute: Call = Call("GET", "/foo")
 
   val formProvider = new WhatsYourContactNumberFormProvider()
   val form: Form[String] = formProvider()
@@ -94,7 +94,7 @@ class WhatsYourContactNumberControllerSpec extends SpecBase with MockitoSugar {
 
       val fakeRegistrationClient = mock[RegistrationClient]
 
-      when(fakeRegistrationClient.subscribe(any[IndividualSubscriptionDetails]())(any[HeaderCarrier]()))
+      when(fakeRegistrationClient.subscribe(any[SubscriptionDetails]())(any[HeaderCarrier]()))
         .thenReturn(Future.successful(Right(SubscriptionSuccessful(Fixtures.subscriptionId))))
 
       when(fakeRegistrationClient.enrolIndividual(any[IndividualEnrolmentDetails]())(any[HeaderCarrier]()))

@@ -112,7 +112,7 @@ class SubscriptionConnectorSpec extends SpecBase with MockitoSugar with ScalaFut
 
     when(regRepo.getRegistrationData(testId)).thenReturn(regData.fold(Future.failed(new RegistrationDataNotFoundException("No registration data found")))(Future.successful))
     when(regRepo.setSubscriptionId(testId)(testSubscriptionId)).thenReturn(Future.successful(()))
-    when(regClient.subscribe(any[IndividualSubscriptionDetails])(any[HeaderCarrier])).thenReturn(Future.successful(subscriptionResult))
+    when(regClient.subscribe(any[SubscriptionDetails])(any[HeaderCarrier])).thenReturn(Future.successful(subscriptionResult))
     when(regClient.enrolIndividual(any[IndividualEnrolmentDetails])(any[HeaderCarrier])).thenReturn(Future.successful(enrolmentResult))
     doNothing().when(regAudit).auditIndividualRegistrationComplete(any[Option[Instant]], any[ValidIndividualData], any[UserAnswers], any[RegistrationOutcome])(any[HeaderCarrier])
     new SubscriptionConnectorImpl(regClient, regRepo, regAudit)
@@ -127,7 +127,7 @@ class SubscriptionConnectorSpec extends SpecBase with MockitoSugar with ScalaFut
 
     when(regRepo.getRegistrationData(testId)).thenReturn(regData.fold(Future.failed(new RegistrationDataNotFoundException("No registration data found")))(Future.successful))
     when(regRepo.setSubscriptionId(testId)(testSubscriptionId)).thenReturn(Future.successful(()))
-    when(regClient.subscribe(any[OrganisationSubscriptionDetails])(any[HeaderCarrier])).thenReturn(Future.successful(subscriptionResult))
+    when(regClient.subscribe(any[SubscriptionDetails])(any[HeaderCarrier])).thenReturn(Future.successful(subscriptionResult))
     when(regClient.enrolOrganisation(any[OrganisationEnrolmentDetails])(any[HeaderCarrier])).thenReturn(Future.successful(enrolmentResult))
     doNothing().when(regAudit).auditOrganisationRegistrationComplete(any[Option[Instant]], any[UserAnswers], any[String], any[RegistrationOutcome])(any[HeaderCarrier])
     new SubscriptionConnectorImpl(regClient, regRepo, regAudit)
