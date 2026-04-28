@@ -117,7 +117,7 @@ class RegistrationClientImpl @Inject()(
           Left(RegistrationServerError(msg))
       }
   }
-  
+
   override def subscribe(
                           subscriptionDetails: SubscriptionDetails
                         )(implicit hc: HeaderCarrier): Future[SubscriptionResult] = {
@@ -128,7 +128,6 @@ class RegistrationClientImpl @Inject()(
       .post(url)
       .withBody(Json.toJson(subscriptionDetails))
       .setHeader(headers: _*)
-      .withBody(Json.toJson(subscriptionDetails))
       .execute[HttpResponse]
       .map(handleResponse)
       .recover {
