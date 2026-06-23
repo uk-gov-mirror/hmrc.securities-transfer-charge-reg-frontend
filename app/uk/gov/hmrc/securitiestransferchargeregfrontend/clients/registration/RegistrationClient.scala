@@ -56,7 +56,6 @@ class RegistrationClientImpl @Inject()(
     val url = url"${config.viewSubscriptionBaseUrl}/$subscriptionId"
 
     http.get(url)
-      .setHeader(headers: _*)
       .execute[HttpResponse]
       .map { resp =>
         resp.status match {
