@@ -26,11 +26,8 @@ enum SubscriptionResponse:
 type SubscriptionResult = Either[RegistrationServiceError, SubscriptionResponse]
 
 enum SubscriptionStatus:
-  case SubscriptionNotFound
   case SubscriptionExpired
   case SubscriptionActive
-  
-type SubscriptionStatusResult = Either[RegistrationServiceError, SubscriptionStatus]
 
 final case class SubscriptionResponseDto(subscriptionId: String)
 
