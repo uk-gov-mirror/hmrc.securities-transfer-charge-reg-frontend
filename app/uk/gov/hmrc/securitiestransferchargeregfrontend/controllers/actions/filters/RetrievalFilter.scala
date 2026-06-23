@@ -36,9 +36,17 @@ class RetrievalFilter @Inject() (appConfig: FrontendAppConfig, redirects: Redire
 
   import redirects.*
 
+  val activeEnrolment: Enrolments => Option[Enrolment] = es =>
+    es.getEnrolment(appConfig.stcEnrolmentKey).filter(_.isActivated)
+
   val enrolledForSTC: Enrolments => Boolean = es =>
-    val stcEnrolment = es.getEnrolment(appConfig.stcEnrolmentKey)
-    stcEnrolment.exists(_.isActivated)
+    activeEnrolment(es).isDefined
+
+  val getSubscriptionId: Enrolments => Option[String] = es =>
+    for {
+      enrolment <- activeEnrolment(es)
+      identifier <- enrolment.getIdentifier(appConfig.stcIdentifierKey)
+    } yield identifier.value
 
   val enrolledFilter: RetrievalFilterFunction[Enrolments, Unit] = enrolments =>
     if (enrolledForSTC(enrolments)) Left(redirects.redirectToServiceF)

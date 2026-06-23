@@ -18,12 +18,11 @@ package uk.gov.hmrc.securitiestransferchargeregfrontend.controllers.actions
 
 import play.api.Logging
 import play.api.mvc.*
-import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.{RegistrationClient, SubscriptionStatus}
-import uk.gov.hmrc.securitiestransferchargeregfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.securitiestransferchargeregfrontend.controllers.Redirects
+import uk.gov.hmrc.securitiestransferchargeregfrontend.controllers.actions.filters.RetrievalFilter
 import uk.gov.hmrc.securitiestransferchargeregfrontend.models.requests.StcAuthRequest
 
 import javax.inject.Inject
@@ -34,20 +33,13 @@ trait EnrolmentCheck extends ActionFilter[StcAuthRequest]
 class EnrolmentCheckImpl @Inject()(
                                     val parser: BodyParsers.Default,
                                     redirects: Redirects,
-                                    registrationClient: RegistrationClient,
-                                    appConfig: FrontendAppConfig
+                                    retrievalFilter: RetrievalFilter,
+                                    registrationClient: RegistrationClient
                                   )(implicit ec: ExecutionContext) extends EnrolmentCheck with Logging:
 
   import redirects.*
 
   override protected def executionContext: ExecutionContext = ec
-
-  private def extractSubscriptionId(enrolments: Enrolments): Option[String] =
-    for {
-      enrolment  <- enrolments.getEnrolment(appConfig.stcEnrolmentKey)
-      if enrolment.isActivated
-      identifier <- enrolment.getIdentifier("STCID")
-    } yield identifier.value
 
   override protected def filter[A](
                                     request: StcAuthRequest[A]
@@ -56,7 +48,7 @@ class EnrolmentCheckImpl @Inject()(
     implicit val hc: HeaderCarrier =
       HeaderCarrierConverter.fromRequestAndSession(request.request, request.request.session)
 
-    extractSubscriptionId(request.enrolments) match {
+    retrievalFilter.getSubscriptionId(request.enrolments) match {
       case Some(subId) =>
         registrationClient.viewSubscription(subId).map {
           case Right(Some(sub)) if sub.subscriptionStatus == SubscriptionStatus.SubscriptionActive =>
@@ -65,7 +57,7 @@ class EnrolmentCheckImpl @Inject()(
             None
         }
 
-      case None =>
+      case _ =>
         Future.successful(None)
     }
   }

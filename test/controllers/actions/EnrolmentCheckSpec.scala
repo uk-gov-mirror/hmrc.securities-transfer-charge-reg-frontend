@@ -26,6 +26,7 @@ import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.Regi
 import uk.gov.hmrc.securitiestransferchargeregfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.securitiestransferchargeregfrontend.controllers.Redirects
 import uk.gov.hmrc.securitiestransferchargeregfrontend.controllers.actions.EnrolmentCheckImpl
+import uk.gov.hmrc.securitiestransferchargeregfrontend.controllers.actions.filters.RetrievalFilter
 import uk.gov.hmrc.securitiestransferchargeregfrontend.models.requests.StcAuthRequest
 
 import scala.concurrent.Future
@@ -36,10 +37,10 @@ class EnrolmentCheckSpec extends SpecBase with IntegrationPatience {
   // Expose the protected filter method for testing
   class Harness(parser: BodyParsers.Default,
                 redirects: Redirects,
-                registrationClient: RegistrationClient,
-                appConfig: FrontendAppConfig)
+                retrievalFilter: RetrievalFilter,
+                registrationClient: RegistrationClient)
                (implicit ec: scala.concurrent.ExecutionContext)
-    extends EnrolmentCheckImpl(parser, redirects, registrationClient, appConfig)
+    extends EnrolmentCheckImpl(parser, redirects, retrievalFilter, registrationClient)
   {
     def callFilter[A](req: StcAuthRequest[A]): Future[Option[Result]] = filter(req)
   }
@@ -53,6 +54,7 @@ class EnrolmentCheckSpec extends SpecBase with IntegrationPatience {
         val parser = application.injector.instanceOf[BodyParsers.Default]
         val appConfig = application.injector.instanceOf[FrontendAppConfig]
         val redirects = application.injector.instanceOf[Redirects]
+        val retrievalFilter = application.injector.instanceOf[RetrievalFilter]
 
         // build an activated enrolment for the configured key with STCID identifier
         val enrolment = Enrolment(appConfig.stcEnrolmentKey, Seq(EnrolmentIdentifier("STCID", "sub123")), "Activated")
@@ -62,7 +64,7 @@ class EnrolmentCheckSpec extends SpecBase with IntegrationPatience {
 
         val registrationClient = new FakeRegistrationClient(true)
 
-        val harness = new Harness(parser, redirects, registrationClient, appConfig)
+        val harness = new Harness(parser, redirects, retrievalFilter, registrationClient)
 
         val maybeResult = harness.callFilter(stcReq)
 
@@ -83,8 +85,8 @@ class EnrolmentCheckSpec extends SpecBase with IntegrationPatience {
 
       running(application) {
         val parser = application.injector.instanceOf[BodyParsers.Default]
-        val appConfig = application.injector.instanceOf[FrontendAppConfig]
         val redirects = application.injector.instanceOf[Redirects]
+        val retrievalFilter = application.injector.instanceOf[RetrievalFilter]
 
         // empty enrolments
         val enrolments = Enrolments(Set())
@@ -93,7 +95,7 @@ class EnrolmentCheckSpec extends SpecBase with IntegrationPatience {
 
         val registrationClient = new FakeRegistrationClient(false)
 
-        val harness = new Harness(parser, redirects, registrationClient, appConfig)
+        val harness = new Harness(parser, redirects, retrievalFilter, registrationClient)
 
         val result = harness.callFilter(stcReq).futureValue
 
