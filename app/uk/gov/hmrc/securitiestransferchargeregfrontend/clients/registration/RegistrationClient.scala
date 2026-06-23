@@ -34,7 +34,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 trait RegistrationClient:
-  def hasCurrentSubscription(etmpSafeId: String)(implicit hc: HeaderCarrier): Future[SubscriptionStatusResult]
+  def viewSubscription(subscriptionId: String)(implicit hc: HeaderCarrier): Future[ViewSubscriptionResult]
   def register(individualRegistrationDetails: IndividualRegistrationDetails)(implicit hc: HeaderCarrier): Future[RegistrationResult]
   def subscribe(subscriptionDetails: SubscriptionDetails)(implicit hc: HeaderCarrier): Future[SubscriptionResult]
   def enrolIndividual(enrolmentDetails: IndividualEnrolmentDetails)(implicit hc: HeaderCarrier): Future[EnrolmentResult]
@@ -49,23 +49,38 @@ class RegistrationClientImpl @Inject()(
 
   private def headers: Seq[(String, String)] = Seq("correlation-id" -> correlationId)
 
-  override def hasCurrentSubscription(
-                                       etmpSafeId: String
-                                     )(implicit hc: HeaderCarrier): Future[SubscriptionStatusResult] = {
+  override def viewSubscription(
+                                 subscriptionId: String
+                               )(implicit hc: HeaderCarrier): Future[ViewSubscriptionResult] = {
 
-    val url = url"${config.hasCurrentSubscriptionBaseUrl}/$etmpSafeId/status"
+    val url = url"${config.viewSubscriptionBaseUrl}/$subscriptionId"
 
     http.get(url)
+      .setHeader(headers: _*)
       .execute[HttpResponse]
       .map { resp =>
         resp.status match {
-          case OK        => Right(SubscriptionStatus.SubscriptionActive)
-          case NOT_FOUND => Right(SubscriptionStatus.SubscriptionNotFound)
-          case status    => Left(SubscriptionServerError(s"unexpected status=$status body=${resp.body}"))
+          case OK =>
+            Json.parse(resp.body).validate[ViewSubscriptionResponseDto].asEither match {
+              case Right(dto) =>
+                Right(Some(dto))
+              case Left(errors) =>
+                val msg = s"RegistrationClient.viewSubscription: Failed to parse 200 response. errors=$errors body=${resp.body}"
+                logger.error(msg)
+                Left(SubscriptionServerError(msg))
+            }
+
+          case NOT_FOUND =>
+            Right(None)
+
+          case status =>
+            Left(SubscriptionServerError(s"RegistrationClient.viewSubscription: unexpected status=$status body=${resp.body}"))
         }
       }
       .recover { case NonFatal(e) =>
-        Left(SubscriptionServerError(s"exception calling BE: ${e.getMessage}"))
+        val msg = s"RegistrationClient.viewSubscription: exception calling BE: ${e.getMessage}"
+        logger.error(msg, e)
+        Left(SubscriptionServerError(msg))
       }
   }
 
@@ -194,8 +209,8 @@ class RegistrationClientImpl @Inject()(
   }
 
   override def enrolOrganisation(
-                                enrolmentDetails: OrganisationEnrolmentDetails
-                              )(implicit hc: HeaderCarrier): Future[EnrolmentResult] = {
+                                  enrolmentDetails: OrganisationEnrolmentDetails
+                                )(implicit hc: HeaderCarrier): Future[EnrolmentResult] = {
 
     val url = url"${config.enrolOrganisationBackendUrl}"
 

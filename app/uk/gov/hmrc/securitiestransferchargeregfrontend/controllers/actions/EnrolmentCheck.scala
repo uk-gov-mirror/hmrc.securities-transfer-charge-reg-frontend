@@ -18,41 +18,36 @@ package uk.gov.hmrc.securitiestransferchargeregfrontend.controllers.actions
 
 import play.api.Logging
 import play.api.mvc.*
+import uk.gov.hmrc.auth.core.Enrolments
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.SubscriptionStatus.SubscriptionActive
-import uk.gov.hmrc.securitiestransferchargeregfrontend.controllers.Redirects
-import uk.gov.hmrc.securitiestransferchargeregfrontend.controllers.actions.filters.RetrievalFilter
-import uk.gov.hmrc.securitiestransferchargeregfrontend.models.requests.StcAuthRequest
-import uk.gov.hmrc.securitiestransferchargeregfrontend.repositories.RegistrationDataRepository
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
-import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.RegistrationClient
+import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.{RegistrationClient, SubscriptionStatus}
+import uk.gov.hmrc.securitiestransferchargeregfrontend.config.FrontendAppConfig
+import uk.gov.hmrc.securitiestransferchargeregfrontend.controllers.Redirects
+import uk.gov.hmrc.securitiestransferchargeregfrontend.models.requests.StcAuthRequest
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 trait EnrolmentCheck extends ActionFilter[StcAuthRequest]
 
-class EnrolmentCheckImpl @Inject()(val parser: BodyParsers.Default,
-                                   redirects: Redirects,
-                                   retrievalFilter: RetrievalFilter,
-                                   registrationClient: RegistrationClient,
-                                   registrationDataRepository: RegistrationDataRepository
-                                  )
-                                  (implicit ec: ExecutionContext) extends EnrolmentCheck with Logging:
+class EnrolmentCheckImpl @Inject()(
+                                    val parser: BodyParsers.Default,
+                                    redirects: Redirects,
+                                    registrationClient: RegistrationClient,
+                                    appConfig: FrontendAppConfig
+                                  )(implicit ec: ExecutionContext) extends EnrolmentCheck with Logging:
 
   import redirects.*
 
-  // TODO: We need a way to get the safe-id for the current user
-  private[controllers] def hasCurrentSubscription(
-                                                   etmpSafeId: String
-                                                 )(implicit hc: HeaderCarrier): Future[Boolean] =
-    registrationClient.hasCurrentSubscription(etmpSafeId).map {
-      case Right(SubscriptionActive) => true
-      case _                         => false
-    }
-
-
   override protected def executionContext: ExecutionContext = ec
+
+  private def extractSubscriptionId(enrolments: Enrolments): Option[String] =
+    for {
+      enrolment  <- enrolments.getEnrolment(appConfig.stcEnrolmentKey)
+      if enrolment.isActivated
+      identifier <- enrolment.getIdentifier("STCID")
+    } yield identifier.value
 
   override protected def filter[A](
                                     request: StcAuthRequest[A]
@@ -61,18 +56,16 @@ class EnrolmentCheckImpl @Inject()(val parser: BodyParsers.Default,
     implicit val hc: HeaderCarrier =
       HeaderCarrierConverter.fromRequestAndSession(request.request, request.request.session)
 
-    registrationDataRepository.getRegistrationData(request.userId).flatMap { regData =>
-      regData.safeId match {
-        case Some(safeId) =>
-          hasCurrentSubscription(safeId).map { isSubscribed =>
-            if (retrievalFilter.enrolledForSTC(request.enrolments) && isSubscribed)
-              Some(redirectToService)
-            else
-              None
-          }
+    extractSubscriptionId(request.enrolments) match {
+      case Some(subId) =>
+        registrationClient.viewSubscription(subId).map {
+          case Right(Some(sub)) if sub.subscriptionStatus == SubscriptionStatus.SubscriptionActive =>
+            Some(redirectToService)
+          case _ =>
+            None
+        }
 
-        case None =>
-          Future.successful(None)
-      }
+      case None =>
+        Future.successful(None)
     }
   }

@@ -20,16 +20,13 @@ import base.{Fixtures, SpecBase}
 import org.scalatest.concurrent.IntegrationPatience
 import play.api.mvc.{AnyContent, BodyParsers, Result}
 import play.api.test.Helpers.*
-import play.api.test.{FakeRequest, Helpers}
-import repositories.FakeRegistrationDataRepository
+import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.{Enrolment, EnrolmentIdentifier, Enrolments}
 import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.RegistrationClient
 import uk.gov.hmrc.securitiestransferchargeregfrontend.config.FrontendAppConfig
 import uk.gov.hmrc.securitiestransferchargeregfrontend.controllers.Redirects
 import uk.gov.hmrc.securitiestransferchargeregfrontend.controllers.actions.EnrolmentCheckImpl
-import uk.gov.hmrc.securitiestransferchargeregfrontend.controllers.actions.filters.RetrievalFilter
 import uk.gov.hmrc.securitiestransferchargeregfrontend.models.requests.StcAuthRequest
-import uk.gov.hmrc.securitiestransferchargeregfrontend.repositories.RegistrationDataRepository
 
 import scala.concurrent.Future
 
@@ -39,36 +36,33 @@ class EnrolmentCheckSpec extends SpecBase with IntegrationPatience {
   // Expose the protected filter method for testing
   class Harness(parser: BodyParsers.Default,
                 redirects: Redirects,
-                retrievalFilter: RetrievalFilter,
                 registrationClient: RegistrationClient,
-                registrationDataRepository: RegistrationDataRepository)
+                appConfig: FrontendAppConfig)
                (implicit ec: scala.concurrent.ExecutionContext)
-    extends EnrolmentCheckImpl(parser, redirects, retrievalFilter, registrationClient, registrationDataRepository)
+    extends EnrolmentCheckImpl(parser, redirects, registrationClient, appConfig)
   {
     def callFilter[A](req: StcAuthRequest[A]): Future[Option[Result]] = filter(req)
   }
 
   "EnrolmentCheck" - {
 
-    "must redirect to the service when the user is enrolled and has a current subscription" in {
+    "must redirect to the service when the user is enrolled and has an active subscription" in {
       val application = applicationBuilder().build()
 
       running(application) {
         val parser = application.injector.instanceOf[BodyParsers.Default]
         val appConfig = application.injector.instanceOf[FrontendAppConfig]
         val redirects = application.injector.instanceOf[Redirects]
-        val retrievalFilter = application.injector.instanceOf[RetrievalFilter]
 
-        // build an activated enrolment for the configured key
-        val enrolment = Enrolment(appConfig.stcEnrolmentKey, Seq(EnrolmentIdentifier("id", "1")), "Activated")
+        // build an activated enrolment for the configured key with STCID identifier
+        val enrolment = Enrolment(appConfig.stcEnrolmentKey, Seq(EnrolmentIdentifier("STCID", "sub123")), "Activated")
         val enrolments = Enrolments(Set(enrolment))
 
         val stcReq = Fixtures.fakeStcAuthRequest[AnyContent](request = FakeRequest(), enrolmentsOverride = enrolments)
 
         val registrationClient = new FakeRegistrationClient(true)
-        
-        val registrationDataRepository = new FakeRegistrationDataRepository(Fixtures.registrationData)
-        val harness = new Harness(parser, redirects, retrievalFilter, registrationClient, registrationDataRepository)
+
+        val harness = new Harness(parser, redirects, registrationClient, appConfig)
 
         val maybeResult = harness.callFilter(stcReq)
 
@@ -84,13 +78,13 @@ class EnrolmentCheckSpec extends SpecBase with IntegrationPatience {
       }
     }
 
-    "must allow the request to proceed when the user is not enrolled or there is no subscription" in {
+    "must allow the request to proceed when the user is not enrolled or the subscription is inactive/missing" in {
       val application = applicationBuilder().build()
 
       running(application) {
         val parser = application.injector.instanceOf[BodyParsers.Default]
+        val appConfig = application.injector.instanceOf[FrontendAppConfig]
         val redirects = application.injector.instanceOf[Redirects]
-        val retrievalFilter = application.injector.instanceOf[RetrievalFilter]
 
         // empty enrolments
         val enrolments = Enrolments(Set())
@@ -99,8 +93,7 @@ class EnrolmentCheckSpec extends SpecBase with IntegrationPatience {
 
         val registrationClient = new FakeRegistrationClient(false)
 
-        val registrationDataRepository = new FakeRegistrationDataRepository(Fixtures.registrationData)
-        val harness = new Harness(parser, redirects, retrievalFilter, registrationClient, registrationDataRepository)
+        val harness = new Harness(parser, redirects, registrationClient, appConfig)
 
         val result = harness.callFilter(stcReq).futureValue
 
