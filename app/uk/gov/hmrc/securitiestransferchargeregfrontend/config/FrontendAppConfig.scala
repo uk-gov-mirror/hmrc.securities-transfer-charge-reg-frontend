@@ -45,7 +45,8 @@ class FrontendAppConfig @Inject() (configuration: Configuration, servicesConfig:
   val registerUrl: String = configuration.get[String]("microservice.redirects.register-url")
   val asaUrl: String = configuration.get[String]("microservice.redirects.asa-url")
   val ivUpliftUrl: String = configuration.get[String]("microservice.redirects.iv-uplift-url")
-  val stcServiceUrl: String = configuration.get[String]("microservice.redirects.stc-service-url")
+  val stcServiceUrl: String =
+    servicesConfig.baseUrl("securities-transfer-charge-frontend") + "/securities-transfer-charge/submissions-dashboard"
 
   /*
    * GRS Incorporated Entity
