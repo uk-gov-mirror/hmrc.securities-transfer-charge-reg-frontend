@@ -28,8 +28,7 @@ import play.api.test.Helpers.*
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.EnrolmentResponse.EnrolmentSuccessful
 import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.SubscriptionResponse.SubscriptionSuccessful
-import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.SubscriptionStatus.SubscriptionActive
-import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.{IndividualEnrolmentDetails, RegistrationClient, SubscriptionDetails}
+import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.{IndividualEnrolmentDetails, RegistrationClient, SubscriptionDetails, ViewSubscriptionResponseDto}
 import uk.gov.hmrc.securitiestransferchargeregfrontend.connectors.{SubscriptionConnector, SubscriptionErrorException}
 import uk.gov.hmrc.securitiestransferchargeregfrontend.controllers.individuals.routes as individualRoutes
 import uk.gov.hmrc.securitiestransferchargeregfrontend.controllers.routes
@@ -54,7 +53,7 @@ class WhatsYourContactNumberControllerSpec extends SpecBase with MockitoSugar {
 
   lazy val whatsYourContactNumberRoute: String = individualRoutes.WhatsYourContactNumberController.onPageLoad().url
   val backLinkRoute: Call = individualRoutes.WhatsYourEmailAddressController.onPageLoad()
-  
+
   "WhatsYourContactNumber Controller" - {
 
     "must return OK and the correct view for a GET" in {
@@ -100,8 +99,8 @@ class WhatsYourContactNumberControllerSpec extends SpecBase with MockitoSugar {
       when(fakeRegistrationClient.enrolIndividual(any[IndividualEnrolmentDetails]())(any[HeaderCarrier]()))
         .thenReturn(Future.successful(Right(EnrolmentSuccessful)))
 
-      when(fakeRegistrationClient.hasCurrentSubscription(any[String]())(any[HeaderCarrier]()))
-        .thenReturn(Future.successful(Right(SubscriptionActive)))
+      when(fakeRegistrationClient.viewSubscription(any[String]())(any[HeaderCarrier]()))
+        .thenReturn(Future.successful(Right(Some(ViewSubscriptionResponseDto(None)))))
 
       val application =
         applicationBuilder(userAnswers = Some(userAnswers))

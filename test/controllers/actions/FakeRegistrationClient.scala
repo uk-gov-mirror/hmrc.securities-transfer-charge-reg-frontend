@@ -20,20 +20,19 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.EnrolmentResponse.EnrolmentSuccessful
 import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.RegistrationResponse.{RegistrationFailed, RegistrationSuccessful}
 import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.SubscriptionResponse.{SubscriptionFailed, SubscriptionSuccessful}
-import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.SubscriptionStatus.{SubscriptionActive, SubscriptionNotFound}
 import uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration.{EnrolmentResult, IndividualEnrolmentDetails, IndividualRegistrationDetails,
-  OrganisationEnrolmentDetails, RegistrationClient, RegistrationResult, SubscriptionDetails, SubscriptionResult, SubscriptionStatusResult}
+  OrganisationEnrolmentDetails, RegistrationClient, RegistrationResult, SubscriptionDetails, SubscriptionResult, ViewSubscriptionResponseDto, ViewSubscriptionResult}
 
 import scala.concurrent.Future
 
 class FakeRegistrationClient(succeeds: Boolean) extends RegistrationClient {
 
-  override def hasCurrentSubscription(etmpSafeId: String)(implicit hc: HeaderCarrier): Future[SubscriptionStatusResult] =
+  override def viewSubscription(subscriptionId: String)(implicit hc: HeaderCarrier): Future[ViewSubscriptionResult] =
     if (succeeds) {
-      Future.successful(Right(SubscriptionActive))
+      Future.successful(Right(Some(ViewSubscriptionResponseDto(None))))
     }
     else {
-      Future.successful(Right(SubscriptionNotFound))
+      Future.successful(Right(None))
     }
 
   override def register(individualRegistrationDetails: IndividualRegistrationDetails)(implicit hc: HeaderCarrier): Future[RegistrationResult] =

@@ -17,6 +17,7 @@
 package uk.gov.hmrc.securitiestransferchargeregfrontend.clients.registration
 
 import play.api.libs.json.{Json, OFormat}
+import java.time.LocalDate
 
 enum SubscriptionResponse:
   case SubscriptionSuccessful(subscriptionId: String)
@@ -25,14 +26,26 @@ enum SubscriptionResponse:
 type SubscriptionResult = Either[RegistrationServiceError, SubscriptionResponse]
 
 enum SubscriptionStatus:
-  case SubscriptionNotFound
   case SubscriptionExpired
   case SubscriptionActive
-  
-type SubscriptionStatusResult = Either[RegistrationServiceError, SubscriptionStatus]
 
 final case class SubscriptionResponseDto(subscriptionId: String)
 
 object SubscriptionResponseDto {
   implicit val format: OFormat[SubscriptionResponseDto] = Json.format[SubscriptionResponseDto]
 }
+
+final case class ViewSubscriptionResponseDto(
+                                              subsValidTo: Option[LocalDate]
+                                            ) {
+  def subscriptionStatus: SubscriptionStatus =
+    subsValidTo match
+      case Some(date) if date.isBefore(LocalDate.now()) => SubscriptionStatus.SubscriptionExpired
+      case _                                            => SubscriptionStatus.SubscriptionActive
+}
+
+object ViewSubscriptionResponseDto {
+  implicit val format: OFormat[ViewSubscriptionResponseDto] = Json.format[ViewSubscriptionResponseDto]
+}
+
+type ViewSubscriptionResult = Either[RegistrationServiceError, Option[ViewSubscriptionResponseDto]]
